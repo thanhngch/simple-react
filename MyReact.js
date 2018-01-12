@@ -1,8 +1,8 @@
 var ReactDOM = {
   _rootComponent: null,
   _element: null,
-  _inputs: [],
-  _inputs2: [],
+  _inputsValue: [],
+  _inputsFocus: [],
   render: function (component, element) {
     document.onreadystatechange = () => {
       if (document.readyState === 'complete') {
@@ -18,10 +18,10 @@ var ReactDOM = {
     for (let i = 0; i < inputs.length; i++) {
       let input = inputs[i];
       if (input.getAttribute('value') === null) {
-        input.value = ReactDOM._inputs[i];
+        input.value = ReactDOM._inputsValue[i];
       }
-      if (ReactDOM._inputs2[i]) {
-        input.value = ReactDOM._inputs[i];
+      if (ReactDOM._inputsFocus[i]) {
+        input.value = ReactDOM._inputsValue[i];
         input.focus();
         input.selectionStart = input.selectionEnd = input.value.length;
       }
@@ -29,13 +29,13 @@ var ReactDOM = {
   },
   reRender: function() {
     if (React._root) {
-      ReactDOM._inputs = [];
-      ReactDOM._inputs2 = [];
+      ReactDOM._inputsValue = [];
+      ReactDOM._inputsFocus = [];
       let inputs = ReactDOM._element.getElementsByTagName('input');
       for (let i = 0; i < inputs.length; i++) {
         let input = inputs[i];
-        ReactDOM._inputs.push(input.value);
-        ReactDOM._inputs2.push(document.activeElement == input);
+        ReactDOM._inputsValue.push(input.value);
+        ReactDOM._inputsFocus.push(document.activeElement == input);
       };
       ReactDOM._element.innerHTML = '';
       ReactDOM._element.appendChild(React.createElement(...React._root));
@@ -50,7 +50,6 @@ var React = {
     constructor(props) {
       this.state = {};
       this.props = props;
-      this._inputText = '';
     }
     setState(fSetState) {
       if (typeof fSetState == 'function') {
@@ -107,11 +106,12 @@ var React = {
       let attrKeys = Object.keys(attr);
       for (let i = 0; i < attrKeys.length; i++) {
         let attrKey = attrKeys[i];
-        // re implement event list here:
-        // https://www.w3schools.com/jsref/dom_obj_event.asp
         if (attrKey == 'onChange' && (wraper == 'input' || wraper == 'textarea')) {
           element.addEventListener('keyup', attr[attrKey]);
-        } if (attrKey.substr(0, 2) == 'on') {
+        }
+        // re implement event list here:
+        // https://www.w3schools.com/jsref/dom_obj_event.asp 
+        else if (attrKey.substr(0, 2) == 'on') {
           let attrKeyLower = attrKey.toLowerCase();
           element.addEventListener(attrKey.substr(2).toLowerCase(), attr[attrKey]);
         } else if (attrKey != 'children') {
