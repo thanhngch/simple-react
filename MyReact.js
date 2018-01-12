@@ -1,6 +1,8 @@
 var ReactDOM = {
   _rootComponent: null,
   _element: null,
+  _inputs: [],
+  _inputs2: [],
   render: function (component, element) {
     document.onreadystatechange = () => {
       if (document.readyState === 'complete') {
@@ -12,14 +14,29 @@ var ReactDOM = {
   _reFocus: function() {
     // reimplement it
     // only focus on input
-    var input = document.getElementById('input');
-    if (input) {
-      input.focus();
-      input.selectionStart = input.selectionEnd = input.value.length;
+    let inputs = ReactDOM._element.getElementsByTagName('input');
+    for (let i = 0; i < inputs.length; i++) {
+      let input = inputs[i];
+      if (input.getAttribute('value') === null) {
+        input.value = ReactDOM._inputs[i];
+      }
+      if (ReactDOM._inputs2[i]) {
+        input.value = ReactDOM._inputs[i];
+        input.focus();
+        input.selectionStart = input.selectionEnd = input.value.length;
+      }
     }
   },
   reRender: function() {
     if (React._root) {
+      ReactDOM._inputs = [];
+      ReactDOM._inputs2 = [];
+      let inputs = ReactDOM._element.getElementsByTagName('input');
+      for (let i = 0; i < inputs.length; i++) {
+        let input = inputs[i];
+        ReactDOM._inputs.push(input.value);
+        ReactDOM._inputs2.push(document.activeElement == input);
+      };
       ReactDOM._element.innerHTML = '';
       ReactDOM._element.appendChild(React.createElement(...React._root));
       ReactDOM._reFocus();
@@ -33,6 +50,7 @@ var React = {
     constructor(props) {
       this.state = {};
       this.props = props;
+      this._inputText = '';
     }
     setState(fSetState) {
       if (typeof fSetState == 'function') {
@@ -68,7 +86,7 @@ var React = {
       if (children && children.length > 0) {
         attr.children = children;
       }
-      var component = new wraper(attr);
+      let component = new wraper(attr);
       
       let element = null;
       if (component.render) {
@@ -84,17 +102,16 @@ var React = {
     let selfEndtag = ['area', 'base', 'br', 'col', 'command', 'embed', 
       'hr', 'img', 'input', 'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
     let attrHtml = '';
-    var element = document.createElement(wraper);
-    if (wraper == 'input') {
-      element.focus();
-    }
+    let element = document.createElement(wraper);
     if (attr) {
       let attrKeys = Object.keys(attr);
       for (let i = 0; i < attrKeys.length; i++) {
         let attrKey = attrKeys[i];
         // re implement event list here:
         // https://www.w3schools.com/jsref/dom_obj_event.asp
-        if (attrKey.substr(0, 2) == 'on') {
+        if (attrKey == 'onChange' && (wraper == 'input' || wraper == 'textarea')) {
+          element.addEventListener('keyup', attr[attrKey]);
+        } if (attrKey.substr(0, 2) == 'on') {
           let attrKeyLower = attrKey.toLowerCase();
           element.addEventListener(attrKey.substr(2).toLowerCase(), attr[attrKey]);
         } else if (attrKey != 'children') {
@@ -107,21 +124,21 @@ var React = {
       }
     }
     if (children && children.length > 0) {
-      children.map(
-        (child) => {
-          if (child != null) {
-            if (typeof child != 'object') {
-              var t = document.createTextNode(child + '');
-              element.appendChild(t);
-            } else if (Array.isArray(child)) {
-              child.map(c => element.appendChild(c));
+      let addChildren = function(_children) {
+        _children.map(
+          (child) => {
+            if (child != null) {
+              if (typeof child != 'object') {
+                element.appendChild(document.createTextNode(child + ''));
+              } else if (Array.isArray(child)) {
+                addChildren(child);
+              } else {
+                element.appendChild(child);
+              }
             }
-            else {
-              element.appendChild(child);
-            }
-          }
-        }
-      );
+        });
+      }
+      addChildren(children);
     }
     return element;
   }

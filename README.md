@@ -2,7 +2,7 @@
 I call it: MyReact
 Using:
 - `yarn install`
-- `./node_modules/.bin/babel hello.js -o build.js`
+- `yarn test example/[file]`
 - `open index.html in browser`
 
 There some example:
